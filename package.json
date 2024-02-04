@@ -1,0 +1,23 @@
+{
+	"name": "transaction-router",
+	"version": "1.0.0",
+	"description": " Uniswap smart-order-router wrapper for transactions since smart-order-router isnt in rust :/ ",
+	"main": "app.js",
+	"repository": "https://github.com/auto-trading-temp-name/transaction-router",
+	"private": true,
+	"type": "module",
+	"dependencies": {
+		"@ethersproject/providers": "^5.7.2",
+		"@uniswap/sdk-core": "^4.0.10",
+		"@uniswap/smart-order-router": "^3.21.1"
+	},
+	"devDependencies": {
+		"eslint": "^8.56.0",
+		"eslint-config-airbnb-base": "^15.0.0",
+		"eslint-config-prettier": "^9.1.0",
+		"eslint-disable": "^1.0.2",
+		"eslint-plugin-import": "^2.29.1",
+		"prettier": "^3.2.5",
+		"prettier-eslint": "^16.3.0"
+	}
+}
