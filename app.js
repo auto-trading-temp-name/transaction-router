@@ -17,7 +17,7 @@ const log = createLogger({
 		},
 		{
 			level: 'trace',
-			path: 'route.log'
+			path: 'transaction-router.log'
 		}
 	]
 });
