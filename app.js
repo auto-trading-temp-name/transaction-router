@@ -1,9 +1,6 @@
 import express from 'express';
 import bunyanMiddleware from 'bunyan-middleware';
 import epipebomb from 'epipebomb';
-import { AlphaRouter, CurrencyAmount, SwapType } from '@uniswap/smart-order-router';
-import { JsonRpcProvider } from '@ethersproject/providers';
-import { Percent, Token, TradeType } from '@uniswap/sdk-core';
 import { createLogger } from 'bunyan';
 
 epipebomb();
@@ -22,58 +19,21 @@ const log = createLogger({
 	]
 });
 
-const provider = new JsonRpcProvider(process.argv[2]);
-const chainId = Number(process.argv[3]);
-
-const router = new AlphaRouter({
-	chainId,
-	provider
-});
-
-log.info({ chainId, providerUrl: process.argv[2] }, 'initialized router');
-
 /*
 	Transaction Format:
 	{
 		amount: Number
 		action: String (buy | sell)
 		pair: [
-			{
-				address: String,
-				decimals: Number
-			},
-			{
-				address: String,
-				decimals: Number
-			}
-		]
+			String,
+			String
+		],
+		provider: String
 	}
 */
 
 const routeTransaction = async transaction => {
-	const tokens = {
-		base: new Token(chainId, transaction.pair[0].address, transaction.pair[0].decimals),
-		mod: new Token(chainId, transaction.pair[1].address, transaction.pair[1].decimals)
-	};
-
-	const amount = CurrencyAmount.fromRawAmount(tokens.base, transaction.amount);
-
-	const route = await router.route(
-		amount,
-		tokens.mod,
-		transaction.action === 'sell' ? TradeType.EXACT_OUTPUT : TradeType.EXACT_INPUT,
-		{
-			recipient: transaction.address,
-			slippageTolerance: new Percent(20, 10000), // 0.2%
-			deadline: Math.floor(Date.now() / 1000) + 60 * 10,
-			type: SwapType.SWAP_ROUTER_02
-		}
-	);
-	if (!route) throw new Error('No Route');
-	const {
-		methodParameters: { calldata, value }
-	} = route;
-	return `${calldata}:${value}`;
+	// @TODO blah blah ccxt blah blah transaction blah blah exchange blah blah blah
 };
 
 const app = express();
@@ -103,5 +63,6 @@ app.post('/route', async (req, res) => {
 	}
 });
 
-const port = 6278;
-app.listen(port, () => log.info({ port }, 'server listening'));
+const server = app.listen(6278, () =>
+	log.info({ port: server.address().port }, 'server listening')
+);
