@@ -2,6 +2,7 @@ import express from 'express';
 import bunyanMiddleware from 'bunyan-middleware';
 import epipebomb from 'epipebomb';
 import { createLogger } from 'bunyan';
+import ccxt from 'ccxt';
 
 epipebomb();
 
@@ -19,21 +20,38 @@ const log = createLogger({
 	]
 });
 
-/*
-	Transaction Format:
-	{
-		amount: Number
-		action: String (buy | sell)
-		pair: [
-			String,
-			String
-		],
-		provider: String
-	}
-*/
+const allowedProviders = ['coinbase'];
 
-const routeTransaction = async transaction => {
-	// @TODO blah blah ccxt blah blah transaction blah blah exchange blah blah blah
+const padArray = (array, length, fill) =>
+	length > array.length ? array.concat(Array(length - array.length).fill(fill)) : array;
+
+/**
+ * @description Routes a transaction
+ * @param {Object} transaction
+ * @param {number} transaction.amount
+ * @param {('buy'|'sell')} transaction.action
+ * @param {[string, string]} transaction.pair
+ * @param {('coinbase')} transaction.provider
+ * @param {string} transaction.auth
+ */
+const routeTransaction = async ({ action, pair, provider, auth }) => {
+	if (!allowedProviders.includes(provider))
+		throw new Error(`provider ${provider} is not in allowed provider list`);
+
+	const [key, secret, id, password] = padArray(auth.split(':'), 4, null);
+	// eslint-disable-next-line no-param-reassign
+	auth = {
+		apiKey: key.replace(/\\n/, '\n'),
+		secret: secret.replace(/\\n/, '\n'),
+		uid: id,
+		password
+	};
+
+	const exchange = new ccxt[provider](auth);
+	exchange.checkRequiredCredentials();
+
+	if (action === 'buy') await exchange.createMarketBuyOrder(pair.reverse().join('/'));
+	else await exchange.createMarketBuyOrder(pair.join('/'), action);
 };
 
 const app = express();
@@ -63,6 +81,6 @@ app.post('/route', async (req, res) => {
 	}
 });
 
-const server = app.listen(6278, () =>
+const server = app.listen(process.argv[2] || 0, () =>
 	log.info({ port: server.address().port }, 'server listening')
 );
